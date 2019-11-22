@@ -290,6 +290,9 @@ static const CGFloat CollectionViewHeight = 100.f;
         CellData *data = newData[i];
         [self applyFilterForCellData:data atIndex:i];
     }
+    
+    self.hideCollectionView = false;
+    [self animateLayout];
 }
 
 
