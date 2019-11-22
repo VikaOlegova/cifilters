@@ -9,6 +9,7 @@
 #import "ViewController.h"
 #import "Cell.h"
 #import "CellData.h"
+#import <PhotosUI/PhotosUI.h>
 
 static const CGFloat ButtonHeight = 50.0;
 static const CGFloat CollectionViewHeight = 100.f;
@@ -264,17 +265,20 @@ static const CGFloat CollectionViewHeight = 100.f;
 {
     [picker dismissViewControllerAnimated:YES completion:nil];
     
-	UIImage *selectedImage = [self normalizedImageWithImage:[info objectForKey:UIImagePickerControllerOriginalImage]];
-	self.selectedImage = selectedImage;
-	self.imageView.image = selectedImage;
+    UIImage *selectedImage = [info objectForKey:UIImagePickerControllerOriginalImage];
+	UIImage *resizedImage = [self resizeImage:selectedImage newWidth:CGRectGetWidth(self.view.bounds)];
+    NSLog(@"new size %ldx%ld", (long)resizedImage.size.width, (long)resizedImage.size.height);
+    
+	self.selectedImage = resizedImage;
+	self.imageView.image = resizedImage;
     
     NSMutableArray<CellData *> *newData = [NSMutableArray new];
     
-    CellData *originalImageData = [[CellData alloc] initWithOriginalImage:selectedImage];
+    CellData *originalImageData = [[CellData alloc] initWithOriginalImage:resizedImage];
     [newData addObject:originalImageData];
     
     for (NSString *filterName in self.filtersNames) {
-        CellData *data = [[CellData alloc] initWithOriginalImage:selectedImage filterName:filterName];
+        CellData *data = [[CellData alloc] initWithOriginalImage:resizedImage filterName:filterName];
         [newData addObject:data];
     }
     
@@ -347,21 +351,17 @@ static const CGFloat CollectionViewHeight = 100.f;
 
 #pragma mark - Helpers
 
-- (UIImage *)normalizedImageWithImage:(UIImage *)image 
+- (UIImage *)resizeImage:(UIImage *)image newWidth:(CGFloat)newWidth
 {
-	if (image.imageOrientation == UIImageOrientationUp)
-	{
-		return image;
-	}
-	
-    CGSize newSize = CGSizeMake(400, image.size.height / (image.size.width/400));
-    UIGraphicsBeginImageContext(newSize);
+    CGFloat aspect = image.size.height / image.size.width;
+    CGSize newSize = CGSizeMake(newWidth, newWidth * aspect);
+    
+    UIGraphicsBeginImageContextWithOptions(newSize, YES, image.scale);
     [image drawInRect:(CGRect){0, 0, newSize}];
-//    UIGraphicsBeginImageContextWithOptions(image.size, NO, image.scale);
-//    [image drawInRect:(CGRect){0, 0, image.size}];
-	UIImage *normalizedImage = UIGraphicsGetImageFromCurrentImageContext();
+	UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
 	UIGraphicsEndImageContext();
-	return normalizedImage;
+    
+	return resizedImage;
 }
 
 
